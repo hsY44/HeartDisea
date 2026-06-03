@@ -1,7 +1,7 @@
-# 서울 깡통전세 위험 분석 및 의료취약지역 시각화
+# 심장병 예측 모델 (Heart Disease Prediction)
 
-서울 25개 구 아파트·빌라 실거래 데이터를 수집·가공하여 **깡통전세 위험 매물을 등급별로 분류**하고,  
-전국 13개 지역 **의료취약지역 분포**를 인구 대비 병원 수 지표로 시각화한 빅데이터 분석 프로젝트입니다.
+Cleveland Heart Disease 데이터셋을 기반으로 KNN, MLP, RandomForest 세 모델의
+하이퍼파라미터를 최적화하고 성능을 비교하여 심장병 유무를 이진 분류하는 머신러닝 프로젝트입니다.
 
 ---
 
@@ -9,30 +9,25 @@
 
 1. [프로젝트 개요](#프로젝트-개요)
 2. [기술 스택](#기술-스택)
-3. [프로젝트 구조](#프로젝트-구조)
-4. [분석 1 — 서울 깡통전세 위험 분석](#분석-1--서울-깡통전세-위험-분석)
-5. [분석 2 — 전국 의료취약지역 시각화](#분석-2--전국-의료취약지역-시각화)
-6. [데이터 출처](#데이터-출처)
-7. [실행 방법](#실행-방법)
+3. [데이터셋](#데이터셋)
+4. [분석 흐름](#분석-흐름)
+5. [모델 개발 및 하이퍼파라미터 최적화](#모델-개발-및-하이퍼파라미터-최적화)
+6. [최종 성능 비교](#최종-성능-비교)
+7. [주요 구현 포인트](#주요-구현-포인트)
+8. [프로젝트 구조](#프로젝트-구조)
+9. [실행 방법](#실행-방법)
 
 ---
 
 ## 프로젝트 개요
 
-전세 계약에서 **전세가율(전세가 ÷ 매매가)**이 높을수록, 집주인이 경매·매각 후에도  
-보증금을 반환하지 못하는 이른바 **깡통전세** 위험이 커집니다.  
-공시된 경고 지표는 존재하지만, 실제 매물 단위로 위험도를 수치화한 자료는 부족합니다.
-
-이 프로젝트는 네이버 부동산 크롤링 데이터를 기반으로  
-서울 전 지역 매물의 전세가율을 계산하고, 구별·유형별 위험 분포를 분석합니다.  
-동시에 전국 13개 지역의 분기별 실질 인구 대비 의료기관 수를 산출하여 의료 접근성을 시각화합니다.
-
 | 항목 | 내용 |
 |------|------|
-| 개발 환경 | Google Colab (분석 1) / Anaconda Jupyter (분석 2) |
-| 분석 대상 | 서울 25개 구 전체 아파트·빌라 매물 / 전국 13개 지역 |
-| 노트북 수 | 총 16개 |
-| 데이터 파일 | 매매·전세 CSV 100개 + 병원·인구 공공데이터 4개 |
+| 개발 환경 | Anaconda Jupyter Notebook / Colab |
+| 구성 | 개인 프로젝트 |
+| 데이터셋 | UCI Cleveland Heart Disease Dataset (303 samples, 13 features) |
+| 문제 유형 | 이진 분류 — 심장병 있음(1) / 없음(0) |
+| 사용 모델 | KNN, MLP, RandomForest |
 
 ---
 
@@ -41,158 +36,226 @@
 | 분류 | 사용 기술 |
 |------|----------|
 | 언어 | Python 3 |
-| 개발 환경 | Google Colab (분석 1) / Anaconda Jupyter (분석 2) |
-| 데이터 처리 | pandas, numpy |
-| 시각화 | matplotlib, seaborn, plotly |
-| 지도 시각화 | folium |
-| 크롤링 | 네이버 부동산 |
+| 개발 환경 | Anaconda Jupyter Notebook |
+| 데이터 처리 | pandas (get_dummies 포함), numpy |
+| 시각화 | matplotlib, seaborn |
+| 통계 검정 | scipy (mannwhitneyu, chi2_contingency) |
+| 전처리 | scikit-learn (MinMaxScaler) |
+| 머신러닝 | scikit-learn (KNeighborsClassifier, MLPClassifier, RandomForestClassifier, DecisionTreeClassifier) |
+| 모델 선택 | scikit-learn (train_test_split, StratifiedKFold, cross_val_score, learning_curve, GridSearchCV) |
+| 평가 지표 | scikit-learn metrics (accuracy, precision, recall, f1, ROC-AUC, confusion matrix, log loss, matthews_corrcoef, RocCurveDisplay, PrecisionRecallDisplay) |
+| 유틸리티 | tqdm, warnings |
+
+---
+
+## 데이터셋
+
+**출처**: [UCI Cleveland Heart Disease Dataset (Kaggle)](https://www.kaggle.com/datasets/cherngs/heart-disease-cleveland-uci)
+
+- 샘플 수: 303개
+- 입력 특징: 13개
+- 타겟: `target` (0 = 정상, 1 = 심장병)
+
+### 입력 특징
+
+| 특징 | 한국어 | 설명 |
+|------|--------|------|
+| age | 나이 | 환자 나이 |
+| sex | 성별 | 0 = 여성, 1 = 남성 |
+| chest_pain_type | 가슴 통증 유형 | 0 = 전형적 협심증, 1 = 비정형 협심증, 2 = 비협심증 통증, 3 = 무증상 |
+| resting_blood_pressure | 휴식 혈압 | 안정 시 혈압 (mmHg) |
+| cholesterol | 콜레스테롤 | 혈청 콜레스테롤 (mg/dl) |
+| fasting_blood_sugar | 공복 혈당 | 120 mg/dl 초과 시 1, 이하 시 0 |
+| rest_ecg | 휴식 심전도 | 0 = 정상, 1 = ST-T파 이상, 2 = 좌심실 비대 |
+| max_heart_rate_achieved | 최대 심박수 | 최대 달성 심박수 (bpm) |
+| exercise_induced_angina | 운동 유발 협심증 | 0 = 없음, 1 = 있음 |
+| st_depression | ST 경사 수치 | 운동 대비 휴식 기준 ST 하강 수치 |
+| st_slope | 최대 ST 경사 | 0 = 상향, 1 = 평평, 2 = 하향 |
+| ca | 주요 혈관 수 | 형광 투시로 확인된 주요 혈관 수 (0~3) |
+| thalassemia | 지중해빈혈 | 0 = 없음, 1 = 고정적 결함, 2 = 정상 혈류, 3 = 가역적 결함 |
+
+### 데이터 품질 이슈 및 처리
+
+| 특징 | 이슈 | 처리 방법 |
+|------|------|----------|
+| cholesterol | 0값 — 생물학적으로 불가능한 값 | NaN 처리 후 중앙값으로 대체 |
+| ca | 값 4 — Cleveland 데이터셋 결측값 인코딩 (실제 범위: 0~3) | 결측값으로 처리 |
+
+---
+
+## 분석 흐름
+
+```
+1. 데이터 로드 및 탐색    shape, info, describe, 결측값 확인
+2. 데이터 전처리          이상치 처리, 범주형 레이블 변환 (모델링용 / 시각화용 DataFrame 분리 운용)
+3. EDA                   타겟 분포, 성별·연령 분포, 흉통 유형, 심전도, ST Slope, 지중해빈혈 시각화
+4. 통계 검정              연속형: Mann-Whitney U test / 범주형: Chi-square test
+5. 상관관계 분석          Correlation Heatmap, Box Plot
+6. 인코딩 및 스케일링     pd.get_dummies(drop_first=True), MinMaxScaler (수치형 5개 특징)
+7. 모델 학습              KNN / MLP / RandomForest 기본 모델 학습
+8. 하이퍼파라미터 최적화   파라미터별 Train/Test Score 곡선으로 순차 탐색
+9. 최종 모델 평가         Accuracy, Recall, Precision, F1, ROC-AUC, Specificity, Log Loss, Matthews Correlation
+10. 결과 시각화           ROC Curve, Precision-Recall Curve, Feature Importance, Learning Curve (5-Fold CV), 모델별 성능 비교
+```
+
+---
+
+## 모델 개발 및 하이퍼파라미터 최적화
+
+각 모델의 하이퍼파라미터를 **하나씩 순차적으로** 탐색했습니다.  
+이전 단계에서 확정한 값을 고정한 채 다음 파라미터를 탐색하는 방식으로,  
+각 단계마다 Train Score / Test Score 곡선을 시각화하여 최적값을 선택했습니다.
+
+### KNN
+
+k 범위 1~100을 탐색하여 Test Accuracy 기준 최적 k(`best_k`)를 선택했습니다.
+
+```python
+for k in range(1, 101):
+    classifier = KNeighborsClassifier(n_neighbors=k)
+    classifier.fit(X_train, y_train)
+    accuracy = classifier.score(X_test, y_test)
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        best_k = k
+
+knn = KNeighborsClassifier(n_neighbors=best_k)
+```
+
+### MLP
+
+| 파라미터 | 최적값 |
+|----------|--------|
+| hidden_layer_sizes | (30,) |
+| activation | relu |
+| solver | adam |
+| max_iter | 100 |
+
+### RandomForest
+
+| 파라미터 | 탐색 범위 | 최적값 |
+|----------|----------|--------|
+| n_estimators | 5 ~ 150 (5 단위) | 30 |
+| max_depth | 1 ~ 20 | 6 |
+| min_samples_split | 2 ~ 200 (2 단위) | 2 |
+| min_samples_leaf | 2 ~ 100 (2 단위) | 2 |
+
+```python
+rf_final = RandomForestClassifier(
+    n_estimators=30,
+    max_depth=6,
+    min_samples_split=2,
+    min_samples_leaf=2,
+    random_state=22
+)
+```
+
+### Learning Curve — 5-Fold 교차 검증
+
+학습 곡선 생성 시 `cv=5`로 5-Fold 교차 검증을 적용하여
+훈련 데이터 양에 따른 Train/Validation Score 변화를 확인하고 과적합 여부를 진단했습니다.
+
+```python
+tr_sz, tr_sc, val_sc = learning_curve(
+    model, X_train, y_train,
+    cv=5,
+    train_sizes=np.linspace(0.1, 1.0, 8),
+    scoring='accuracy'
+)
+```
+
+---
+
+## 최종 성능 비교
+
+| 모델 | Accuracy | Recall | 비고 |
+|------|----------|--------|------|
+| RandomForest | **0.869** | 0.778 | 정확도 기준 최고 성능 |
+| KNN | — | **0.808** | 민감도 기준 최고 — 임상 활용 관점에서 유리 |
+| MLP | 0.623 | — | 세 모델 중 최저 성능 |
+
+의료 예측에서는 실제 환자를 정상으로 오분류하는 False Negative를 최소화하는 것이 중요합니다.  
+따라서 Accuracy보다 **Recall(민감도)** 이 핵심 지표이며, 이 관점에서는 KNN이 가장 유리합니다.
+
+---
+
+## 주요 구현 포인트
+
+**모델링용 / 시각화용 DataFrame 분리 운용**
+
+이상치 처리(중앙값 대체)와 수치 인코딩은 모델링 DataFrame(`df`)에만 적용하고,
+시각화용 DataFrame(`df1`, `df4`)은 한국어 범주 레이블로 변환하여 별도로 관리했습니다.
+전처리가 시각화 결과에 영향을 주지 않도록 분리한 것입니다.
+
+```python
+# df: 모델링용 — cholesterol 0 → NaN → 중앙값 대체
+df['cholesterol'] = df['cholesterol'].replace(0, np.nan)
+df['cholesterol'] = df['cholesterol'].fillna(df['cholesterol'].median())
+
+# df1, df4: 시각화용 — 한국어 범주 레이블 변환
+df1.loc[df1['가슴 통증 유형'] == 0, '가슴 통증 유형'] = '전형적인 협심증'
+df4['심장병유무'] = df4.심장병유무.apply(lambda x: '있음' if x == 1 else '없음')
+```
+
+**통계적 유의성 검증으로 특징 선택 근거 확보**
+
+단순 상관계수 확인에 그치지 않고, 심장병 유무 그룹 간 차이를 통계 검정으로 검증했습니다.
+연속형 변수는 정규성 가정이 없는 Mann-Whitney U test, 범주형 변수는 Chi-square test를 적용했습니다.
+
+```python
+# 연속형: Mann-Whitney U test
+stat, p = mannwhitneyu(df_heart[var].dropna(), df_normal[var].dropna(), alternative='two-sided')
+
+# 범주형: Chi-square test
+ct = pd.crosstab(df1[var], df1['심장병유무'])
+chi2, p, dof, _ = chi2_contingency(ct)
+```
+
+**파라미터별 전용 최적화 함수로 체계적 탐색**
+
+각 하이퍼파라미터마다 전용 함수(`optimi_estimator`, `optimi_maxdepth`, `optimi_minsplit`, `optimi_minleaf`)를 작성했습니다.
+Train/Test Score를 DataFrame으로 집계하고 시각화하여 과적합 여부를 확인하면서 최적값을 선택했습니다.
+
+```python
+def optimi_estimator(algorithm, algorithm_name, x_train, y_train, x_test, y_test,
+                     n_estimator_min, n_estimator_max):
+    train_score = []; test_score = []
+    para_n_tree = [n_tree * 5 for n_tree in range(n_estimator_min, n_estimator_max)]
+    for v_n_estimators in para_n_tree:
+        model = algorithm(n_estimators=v_n_estimators, random_state=22)
+        model.fit(x_train, y_train)
+        train_score.append(model.score(x_train, y_train))
+        test_score.append(model.score(x_test, y_test))
+    optimi_visualization(algorithm_name, para_n_tree,
+                         train_score, test_score,
+                         'The number of estimator', 'n_estimator')
+```
 
 ---
 
 ## 프로젝트 구조
 
 ```
-BigDataManage/
-├── notebooks/
-│   ├── 서울 거주 취약 지역.ipynb              # 메인: 서울 전체 깡통전세 위험 분석
-│   ├── 빅데이터_운영_전국_시각화.ipynb        # 전국 의료취약지역 분포 시각화 (종합)
-│   ├── 의료취약지역 강원도 .ipynb
-│   ├── 의료취약지역 경남.ipynb
-│   ├── 의료취약지역 경북.ipynb
-│   ├── 의료취약지역 서울,부산.ipynb
-│   ├── 의료취약지역 전남2.ipynb
-│   ├── 의료취약지역 전북.ipynb
-│   ├── 의료취약지역 제주.ipynb
-│   ├── 의료취약지역 충북.ipynb
-│   ├── 의료취약지역_경기.ipynb
-│   ├── 의료취약지역_광주.ipynb
-│   ├── 의료취약지역_부산.ipynb
-│   ├── 의료취약지역_부산_1.ipynb
-│   ├── 의료취약지역_인천.ipynb
-│   └── 충남.ipynb
-└── data/
-    ├── 아파트_매매/매매 데이터/               # 서울 25개 구 아파트 매매 CSV
-    │   └── 강남구 매매.csv … 중랑구 매매.csv
-    ├── 아파트_전세/전세 데이터/               # 서울 25개 구 아파트 전세 CSV
-    ├── 빌라_매매/오피스텔 매매/               # 서울 25개 구 빌라 매매 CSV
-    ├── 빌라_전세/오피스텔 전세/               # 서울 25개 구 빌라 전세 CSV
-    └── 병원 및 인구 데이터/
-        ├── TL_SCCO_SIG.json                   # 서울 행정구역 경계 GeoJSON (행정안전부)
-        ├── 지역구별 병원.csv
-        ├── 지역구별 총인구.csv
-        └── 시군구별_이동자수.csv
+heart-disease-prediction/
+├── 심장병예측.ipynb              # 전체 분석 및 모델 학습 노트북
+└── heart_cleveland_upload.csv   # Cleveland Heart Disease 데이터셋
 ```
-
----
-
-## 분석 1 — 서울 깡통전세 위험 분석
-
-### 위험 등급 기준
-
-전세가율을 3단계로 분류하여 매물별 위험도를 정량화했습니다.
-
-| 등급 | 전세가율 | 의미 |
-|------|---------|------|
-| 안전 | < 60% | 경매 시 보증금 회수 가능성 높음 |
-| 주의 | 60 ~ 79% | 시세 하락 시 손실 위험 존재 |
-| 위험 | ≥ 80% | 경매·매각 후 보증금 회수 불가 위험 |
-
-### 데이터 처리 흐름
-
-```
-1. 로드      25개 구 CSV를 동적으로 순회하여 단일 DataFrame으로 병합
-2. 병합      매물명(atclNm) 기준으로 매매-전세 inner join, 중복 제거
-3. 전처리    전세가율 계산 → q1~q99 퍼센타일로 이상치 제거
-4. 분류      pd.cut으로 안전 / 주의 / 위험 등급 부여
-5. 집계      구별 위험비율, 평균·중앙값 전세가율, 유형별 교차 분석
-6. 시각화    막대 / KDE / 산점도 / Folium Choropleth 지도
-7. 추출      전세가율 80% 이상 + 가격차 상위 20건 위험 매물 목록
-```
-
-### 주요 구현 포인트
-
-**범용 로드 함수로 코드 중복 제거**
-
-25개 구 파일을 하나씩 읽지 않고, 디렉터리를 순회하는 단일 함수로 처리했습니다.
-파일명에서 구 이름을 파싱하는 정규식도 함께 포함했습니다.
-
-```python
-def load_district_data(base_dir: str) -> pd.DataFrame:
-    frames = []
-    for path in sorted(Path(base_dir).glob('*.csv')):
-        df = pd.read_csv(path, encoding='utf-8-sig')
-        df['구'] = re.sub(r'\s*(빌라\s*)?(매매|전세)$', '', path.stem).strip()
-        frames.append(df)
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-```
-
-**이상치 제거 전략**
-
-전세가율이 0%에 수렴하거나 150%를 초과하는 이상 매물은 데이터 오류일 가능성이 높아,
-q1~q99 퍼센타일 범위로 필터링하여 분석 신뢰도를 확보했습니다.
-
-**시각화 라이브러리 역할 분리**
-
-인터랙티브 차트(막대, KDE, 산점도)는 plotly로 구현하고, 구별 위험도 지도는 Folium Choropleth로 구현했습니다.
-plotly는 다축 비교와 hover 정보 표시에 적합하고, Folium은 GeoJSON 기반 행정구역 단위 choropleth를 직접 지원하기 때문입니다.
-
-행정안전부 GeoJSON(`TL_SCCO_SIG.json`)에서 서울(SIG_CD 11로 시작)만 추출하고,
-구별 종합 위험 점수를 병합하여 히트맵을 생성했습니다.
-
----
-
-## 분석 2 — 전국 의료취약지역 시각화
-
-### 분석 지표
-
-인구 이동을 고려한 **분기별 실질 인구** 대비 의료기관 수를 산출하여  
-단순 병원 수가 아닌 **접근 가능한 의료 자원**의 분포를 측정했습니다.
-
-```
-인구 10만 명당 병원 수 = 해당 분기 병원 수 ÷ 분기 추정 인구 × 100,000
-```
-
-### 분기별 인구 추정 방법
-
-연간 인구이동 데이터(4분기 누적)를 역산하여 각 분기의 순이동 인구를 산출했습니다.
-
-```python
-df['2022/4'] = df['2022 년'] - df['2022.4/4']
-df['2022/3'] = df['2022/4'] - df['2022.3/4']
-# ... (2019년 1분기까지 동일하게 역산)
-```
-
-### 분석 대상 지역 (13개)
-
-건강보험심사평가원 공개 데이터 기준으로 시군구 단위 병원 현황을 확인할 수 있는 광역시·도를 대상으로 했습니다.
-
-서울, 부산, 경기, 인천, 강원, 충북, 충남, 전북, 전남, 경북, 경남, 광주, 제주
-
----
-
-## 데이터 출처
-
-| 데이터 | 출처 |
-|--------|------|
-| 아파트·빌라 매매·전세 실거래가 | 네이버 부동산 크롤링 |
-| 지역구별 병원 현황 | 건강보험심사평가원 |
-| 시군구별 총인구 및 인구이동 | 통계청 |
-| 행정구역 경계 GeoJSON | 행정안전부 (`TL_SCCO_SIG.json`) |
 
 ---
 
 ## 실행 방법
 
-모든 노트북은 **Google Colab** 환경에서 작성되었습니다.
+Anaconda Jupyter Notebook 환경에서 작성되었습니다.
 
-```
-1. notebooks/ 폴더의 .ipynb 파일을 Google Colab에 업로드
-2. data/ 폴더 전체를 Google Drive에 업로드한 후 Drive 마운트
-   from google.colab import drive
-   drive.mount('/content/drive')
-3. 각 노트북 상단의 base_dir 경로를 Drive 내 실제 경로로 수정
-4. 셀 순서대로 실행
+```bash
+# 1. 패키지 설치 (미설치 시)
+pip install scikit-learn pandas numpy matplotlib seaborn scipy tqdm
+
+# 2. CSV 파일을 노트북과 같은 경로에 위치시키거나 경로 수정
+csv_path = 'heart_cleveland_upload.csv'
+
+# 3. 셀 순서대로 실행
 ```
 
-> 깡통전세 분석(`서울 거주 취약 지역.ipynb`)은 아파트·빌라 매매·전세 CSV 4종이 모두 필요합니다.  
-> 의료취약지역 분석 노트북은 `병원 및 인구 데이터/` 폴더 4개 파일만 필요합니다.
+> Google Colab에서 실행 시 Drive 마운트 코드(`drive.mount(...)`)의 주석을 해제하고 CSV 경로를 수정하세요.  
+> 나눔고딕 폰트가 없는 환경에서는 `plt.rcParams['font.family']` 값을 로컬 설치 폰트로 변경해야 합니다.
