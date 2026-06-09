@@ -1,21 +1,31 @@
 # 심장병 예측 모델 (Heart Disease Prediction)
 
-Cleveland Heart Disease 데이터셋을 기반으로 KNN, MLP, RandomForest 세 모델의
-하이퍼파라미터를 최적화하고 성능을 비교하여 심장병 유무를 이진 분류하는 머신러닝 프로젝트입니다.
+> Heart Disease Prediction using KNN · MLP · RandomForest
+
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)
+![Jupyter](https://img.shields.io/badge/Jupyter-F37626?logo=jupyter&logoColor=white)
+![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white)
+![matplotlib](https://img.shields.io/badge/matplotlib-11557C?logo=python&logoColor=white)
+![seaborn](https://img.shields.io/badge/seaborn-4C72B0?logo=python&logoColor=white)
+![scipy](https://img.shields.io/badge/scipy-8CAAE6?logo=scipy&logoColor=white)
+![Project](https://img.shields.io/badge/프로젝트-개인-blue)
+
+Cleveland Heart Disease 데이터셋(303 samples, 13 features)을 기반으로
+KNN, MLP, RandomForest 세 모델의 하이퍼파라미터를 순차 최적화하고
+Accuracy · Recall · ROC-AUC 등 다양한 지표로 성능을 비교한 머신러닝 프로젝트입니다.
 
 ---
 
 ## 목차
 
 1. [프로젝트 개요](#프로젝트-개요)
-2. [기술 스택](#기술-스택)
-3. [데이터셋](#데이터셋)
-4. [분석 흐름](#분석-흐름)
-5. [모델 개발 및 하이퍼파라미터 최적화](#모델-개발-및-하이퍼파라미터-최적화)
-6. [최종 성능 비교](#최종-성능-비교)
+2. [핵심 분석 결과](#핵심-분석-결과)
+3. [기술 스택](#기술-스택)
+4. [데이터셋](#데이터셋)
+5. [분석 흐름](#분석-흐름)
+6. [모델 개발 및 하이퍼파라미터 최적화](#모델-개발-및-하이퍼파라미터-최적화)
 7. [주요 구현 포인트](#주요-구현-포인트)
-8. [프로젝트 구조](#프로젝트-구조)
-9. [실행 방법](#실행-방법)
 
 ---
 
@@ -23,11 +33,28 @@ Cleveland Heart Disease 데이터셋을 기반으로 KNN, MLP, RandomForest 세 
 
 | 항목 | 내용 |
 |------|------|
-| 개발 환경 | Anaconda Jupyter Notebook / Colab |
 | 구성 | 개인 프로젝트 |
+| 개발 환경 | Anaconda Jupyter Notebook / Google Colab |
 | 데이터셋 | UCI Cleveland Heart Disease Dataset (303 samples, 13 features) |
 | 문제 유형 | 이진 분류 — 심장병 있음(1) / 없음(0) |
 | 사용 모델 | KNN, MLP, RandomForest |
+
+---
+
+## 핵심 분석 결과
+
+### 최종 모델 성능 비교
+
+| 모델 | Accuracy | Recall | 비고 |
+|------|----------|--------|------|
+| RandomForest | **0.869** | 0.778 | 정확도 기준 최고 성능 |
+| KNN | — | **0.808** | 민감도 기준 최고 — 임상 활용 관점에서 유리 |
+| MLP | 0.623 | — | 세 모델 중 최저 성능 |
+
+의료 예측에서는 실제 환자를 정상으로 오분류하는 False Negative를 최소화하는 것이 중요합니다.
+따라서 Accuracy보다 **Recall(민감도)** 이 핵심 지표이며, 이 관점에서는 KNN이 가장 유리합니다.
+
+![모델별 성능 비교](images/model_performance_comparison.png)
 
 ---
 
@@ -81,6 +108,8 @@ Cleveland Heart Disease 데이터셋을 기반으로 KNN, MLP, RandomForest 세 
 | cholesterol | 0값 — 생물학적으로 불가능한 값 | NaN 처리 후 중앙값으로 대체 |
 | ca | 값 4 — Cleveland 데이터셋 결측값 인코딩 (실제 범위: 0~3) | 결측값으로 처리 |
 
+![상관관계 히트맵](images/correlation_heatmap.png)
+
 ---
 
 ## 분석 흐름
@@ -102,8 +131,8 @@ Cleveland Heart Disease 데이터셋을 기반으로 KNN, MLP, RandomForest 세 
 
 ## 모델 개발 및 하이퍼파라미터 최적화
 
-각 모델의 하이퍼파라미터를 **하나씩 순차적으로** 탐색했습니다.  
-이전 단계에서 확정한 값을 고정한 채 다음 파라미터를 탐색하는 방식으로,  
+각 모델의 하이퍼파라미터를 **하나씩 순차적으로** 탐색했습니다.
+이전 단계에서 확정한 값을 고정한 채 다음 파라미터를 탐색하는 방식으로,
 각 단계마다 Train Score / Test Score 곡선을 시각화하여 최적값을 선택했습니다.
 
 ### KNN
@@ -122,6 +151,8 @@ for k in range(1, 101):
 knn = KNeighborsClassifier(n_neighbors=best_k)
 ```
 
+![KNN k값 탐색 곡선](images/knn_k_search.png)
+
 ### MLP
 
 | 파라미터 | 최적값 |
@@ -130,6 +161,8 @@ knn = KNeighborsClassifier(n_neighbors=best_k)
 | activation | relu |
 | solver | adam |
 | max_iter | 100 |
+
+![MLP hidden_layer_sizes 탐색 곡선](images/mlp_hidden_layer_search.png)
 
 ### RandomForest
 
@@ -150,6 +183,10 @@ rf_final = RandomForestClassifier(
 )
 ```
 
+![RandomForest n_estimators 탐색 곡선](images/rf_estimators_search.png)
+
+![RandomForest Feature Importance](images/rf_feature_importance.png)
+
 ### Learning Curve — 5-Fold 교차 검증
 
 학습 곡선 생성 시 `cv=5`로 5-Fold 교차 검증을 적용하여
@@ -164,18 +201,9 @@ tr_sz, tr_sc, val_sc = learning_curve(
 )
 ```
 
----
+![Learning Curve (5-Fold CV)](images/learning_curve.png)
 
-## 최종 성능 비교
-
-| 모델 | Accuracy | Recall | 비고 |
-|------|----------|--------|------|
-| RandomForest | **0.869** | 0.778 | 정확도 기준 최고 성능 |
-| KNN | — | **0.808** | 민감도 기준 최고 — 임상 활용 관점에서 유리 |
-| MLP | 0.623 | — | 세 모델 중 최저 성능 |
-
-의료 예측에서는 실제 환자를 정상으로 오분류하는 False Negative를 최소화하는 것이 중요합니다.  
-따라서 Accuracy보다 **Recall(민감도)** 이 핵심 지표이며, 이 관점에서는 KNN이 가장 유리합니다.
+![ROC Curve](images/roc_curve.png)
 
 ---
 
@@ -231,31 +259,3 @@ def optimi_estimator(algorithm, algorithm_name, x_train, y_train, x_test, y_test
                          'The number of estimator', 'n_estimator')
 ```
 
----
-
-## 프로젝트 구조
-
-```
-heart-disease-prediction/
-├── 심장병예측.ipynb              # 전체 분석 및 모델 학습 노트북
-└── heart_cleveland_upload.csv   # Cleveland Heart Disease 데이터셋
-```
-
----
-
-## 실행 방법
-
-Anaconda Jupyter Notebook 환경에서 작성되었습니다.
-
-```bash
-# 1. 패키지 설치 (미설치 시)
-pip install scikit-learn pandas numpy matplotlib seaborn scipy tqdm
-
-# 2. CSV 파일을 노트북과 같은 경로에 위치시키거나 경로 수정
-csv_path = 'heart_cleveland_upload.csv'
-
-# 3. 셀 순서대로 실행
-```
-
-> Google Colab에서 실행 시 Drive 마운트 코드(`drive.mount(...)`)의 주석을 해제하고 CSV 경로를 수정하세요.  
-> 나눔고딕 폰트가 없는 환경에서는 `plt.rcParams['font.family']` 값을 로컬 설치 폰트로 변경해야 합니다.
