@@ -47,12 +47,12 @@ Accuracy · Recall · ROC-AUC 등 다양한 지표로 성능을 비교한 머신
 
 | 모델 | Accuracy | Recall | 비고 |
 |------|----------|--------|------|
-| RandomForest | **0.869** | 0.778 | 정확도 기준 최고 성능 |
-| KNN | — | **0.808** | 민감도 기준 최고 — 임상 활용 관점에서 유리 |
-| MLP | 0.623 | — | 세 모델 중 최저 성능 |
+| KNN | 0.902 | 0.846 | — |
+| RandomForest | **0.934** | 0.889 | Accuracy 최고 |
+| MLP | 0.918 | **0.963** | Recall 최고 — 임상 활용 관점에서 가장 유리 |
 
 의료 예측에서는 실제 환자를 정상으로 오분류하는 False Negative를 최소화하는 것이 중요합니다.
-따라서 Accuracy보다 **Recall(민감도)** 이 핵심 지표이며, 이 관점에서는 KNN이 가장 유리합니다.
+따라서 Accuracy보다 **Recall(민감도)** 이 핵심 지표이며, 이 관점에서는 MLP가 가장 유리합니다.
 
 ![모델별 성능 비교](images/model_performance_comparison.png)
 
